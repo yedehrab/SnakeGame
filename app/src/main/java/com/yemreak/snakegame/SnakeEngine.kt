@@ -280,12 +280,12 @@ class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnabl
         canvas.drawRect(
                 0f,
                 sizeGameScreenY.toFloat(),
-                (sizeGameScreenX / 4).toFloat(),
+                (3 * sizeGameScreenX / 10).toFloat(),
                 (sizeGameScreenY + sizeControlScreenY).toFloat(),
                 paint
         )
         canvas.drawRect(
-                (3 * sizeGameScreenX / 4).toFloat(),
+                (7 * sizeGameScreenX / 10).toFloat(),
                 sizeGameScreenY.toFloat(),
                 sizeGameScreenX.toFloat(),
                 (sizeGameScreenY + sizeControlScreenY).toFloat(),
