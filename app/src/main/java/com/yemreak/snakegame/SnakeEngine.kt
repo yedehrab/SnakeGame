@@ -69,7 +69,7 @@ class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnabl
     private lateinit var canvas: Canvas
 
     // Saniyede 10 kere yeniler (Oyun Hızı)
-    private val FPS = 20
+    private val FPS = 30
 
     private val milisPerSecond = 1000
 
@@ -320,14 +320,14 @@ class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnabl
                 heading =
                        if (heading == Heading.UP || heading == Heading.DOWN) {
                             when {
-                                x > sizeGameScreenX / 4 -> Heading.RIGHT
-                                x < -sizeGameScreenX / 4 -> Heading.LEFT
+                                x > 3 * sizeGameScreenX / 10 -> Heading.RIGHT
+                                x < -3 * sizeGameScreenX / 10 -> Heading.LEFT
                                 else -> heading
                             }
                        } else {
                            when {
-                               y < 0 && x > - sizeGameScreenX / 4 && x < sizeGameScreenX / 4 -> Heading.UP
-                               y > 0 && x > - sizeGameScreenX / 4 && x < sizeGameScreenX / 4 -> Heading.DOWN
+                               y < 0 && x > - 3 * sizeGameScreenX / 10 && x < 3 * sizeGameScreenX / 10 -> Heading.UP
+                               y > 0 && x > - 3 * sizeGameScreenX / 10 && x < 3 * sizeGameScreenX / 10 -> Heading.DOWN
                                else -> heading
                            }
                        }
