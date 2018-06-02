@@ -22,10 +22,10 @@ class SnakeActivity : Activity() {
         val size = Point()
         display.getSize(size)
 
-        // SnakeEngine class'ı için örnek oluşturuyoruz.
+        // Oyunumuzun motorunu çalıştırıyoruz
         snakeEngine = SnakeEngine(this, size)
 
-        // SnakeEngine'i activity'mizin view'i yapıyourz.
+        // SnakeEngine'i activity'mizin view'i yapıyoruz
         setContentView(snakeEngine)
     }
 
