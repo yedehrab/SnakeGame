@@ -14,18 +14,17 @@ import android.widget.Toast
 import java.io.IOException
 import java.util.*
 
-
-
-
-
+@SuppressLint("ViewConstructor")
 class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnable {
     // Pixel konumları
-    private var screenX = size.x
-    private var screenY = size.y
+    private val sizeControlScreenY = size.y / 4
+    private val controlScreenY = size.y - sizeControlScreenY
+    private val sizeGameScreenX = size.x
+    private val sizeGameScreenY = size.y - sizeControlScreenY
     private var blockSize: Int
 
     // Blok genişliği & uzunluğu
-    private val blockNumX = 40
+    private val blockNumX = 20
     private val blockNumY: Int
 
     // Ses Efektleri
@@ -41,6 +40,9 @@ class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnabl
     // Eğer 200 skor olursa ödül verilecek
     private var snakeXs = IntArray(200)
     private var snakeYs = IntArray(200)
+
+    private val speedY = 1
+    private val speedX = 1
 
     @Volatile
     private var isPLaying = false
@@ -66,14 +68,14 @@ class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnabl
 
     private lateinit var canvas: Canvas
 
-    // Saniyede 10 kere yeniler
-    private val FPS = 10
+    // Saniyede 10 kere yeniler (Oyun Hızı)
+    private val FPS = 20
 
     private val milisPerSecond = 1000
 
     init { // Constructor
-        blockSize = screenX / blockNumX
-        blockNumY = screenY / blockSize
+        blockSize = sizeGameScreenX / blockNumX
+        blockNumY = sizeGameScreenY / blockSize
 
         // Ses efektleri eklenmesi
         soundPool = SoundPool(10, AudioManager.STREAM_MUSIC, 0)
@@ -126,7 +128,7 @@ class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnabl
      * Oyunu başlatma
      */
     private fun newGame() {
-        soundPool.play(bgMusic, 1f, 1f, 1, 0, 1f)
+        // soundPool.play(bgMusic, 1f, 1f, 1, 0, 1f)
         // Yılanın parçasını oluşturuyoruz
         snakeLength = defaultSnakeLength
         snakeXs[0] = blockNumX / 2
@@ -172,10 +174,10 @@ class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnabl
         }
 
         when (heading) {
-            Heading.UP -> snakeYs[0]--
-            Heading.RIGHT -> snakeXs[0]++
-            Heading.DOWN -> snakeYs[0]++
-            Heading.LEFT -> snakeXs[0]--
+            Heading.UP -> snakeYs[0] = snakeYs[0] - speedY
+            Heading.RIGHT -> snakeXs[0] = snakeXs[0] + speedX
+            Heading.DOWN -> snakeYs[0] = snakeYs[0] + speedY
+            Heading.LEFT -> snakeXs[0] = snakeXs[0] - speedX
         }
     }
 
@@ -190,7 +192,7 @@ class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnabl
 
         // Çarpışma kontrolü
         for (i in snakeLength - 1 downTo 1) {
-            if (i > 4 && snakeXs[0] == snakeXs[i] && snakeYs[0] == snakeYs[i]) {
+            if (snakeXs[0] == snakeXs[i] && snakeYs[0] == snakeYs[i]) {
                 dead = true
             }
         }
@@ -220,11 +222,20 @@ class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnabl
         if (surfaceHolder.surface.isValid) {
             canvas = surfaceHolder.lockCanvas()
 
-            // Ekranı mavi yapıyoruz
-            canvas.drawColor(Color.BLUE)
+            // Oyun ekranını siyah yapıyoruz
+            paint.color = Color.BLACK
+            canvas.drawRect(
+                    0f,
+                    0f,
+                    sizeGameScreenX.toFloat(),
+                    sizeGameScreenY.toFloat(),
+                    paint
+            )
+
             // Yılanı beyaz yapmak için renk ayarlıyoruz
             paint.color = Color.WHITE
-            canvas.drawText("Score:$score", 10f, 70f, paint)
+            paint.textSize = 67f
+            canvas.drawText("Score: $score", 25f, 70f, paint)
 
             // Yılanın kutularını çizme
             for (i in 0 until snakeLength) {
@@ -247,9 +258,46 @@ class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnabl
                     paint
             )
 
+            drawControlPane()
+
             // Tuvalı kilitliyoruz ve bu Frame için grafikleri gösteriyoruz.
             surfaceHolder.unlockCanvasAndPost(canvas)
         }
+    }
+
+    private fun drawControlPane() {
+        // Kontrol alanını çiziyoruz
+        paint.color = Color.GRAY
+        canvas.drawRect(
+                0f,
+                sizeGameScreenY.toFloat(),
+                sizeGameScreenX.toFloat(),
+                (sizeGameScreenY + sizeControlScreenY).toFloat(),
+                paint
+        )
+
+        paint.color = Color.DKGRAY
+        canvas.drawRect(
+                0f,
+                sizeGameScreenY.toFloat(),
+                (sizeGameScreenX / 4).toFloat(),
+                (sizeGameScreenY + sizeControlScreenY).toFloat(),
+                paint
+        )
+        canvas.drawRect(
+                (3 * sizeGameScreenX / 4).toFloat(),
+                sizeGameScreenY.toFloat(),
+                sizeGameScreenX.toFloat(),
+                (sizeGameScreenY + sizeControlScreenY).toFloat(),
+                paint
+        )
+        canvas.drawRect(
+                0f,
+                (sizeGameScreenY + sizeControlScreenY / 2).toFloat(),
+                sizeGameScreenX.toFloat(),
+                (sizeGameScreenY + sizeControlScreenY / 2 + 20).toFloat(),
+                paint
+        )
     }
 
     private fun updateRequired() : Boolean {
@@ -263,24 +311,27 @@ class SnakeEngine(context: Context, size: Point) : SurfaceView(context), Runnabl
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    public override fun onTouchEvent(event: MotionEvent): Boolean {
+    override fun onTouchEvent(e: MotionEvent): Boolean {
+        val x = e.x - sizeGameScreenX / 2
+        val y = e.y - (sizeGameScreenY + sizeControlScreenY / 2)
 
-        when (event.action and MotionEvent.ACTION_MASK) {
-            MotionEvent.ACTION_UP -> heading = if (event.x >= screenX / 2) {
-                when (heading) {
-                    Heading.UP -> Heading.RIGHT
-                    Heading.RIGHT -> Heading.DOWN
-                    Heading.DOWN -> Heading.LEFT
-                    Heading.LEFT -> Heading.UP
-                }
-            } else {
-                when (heading) {
-                    Heading.UP -> Heading.LEFT
-                    Heading.LEFT -> Heading.DOWN
-                    Heading.DOWN -> Heading.RIGHT
-                    Heading.RIGHT -> Heading.UP
-                }
-            }
+        when (e.action and MotionEvent.ACTION_MASK) {
+            MotionEvent.ACTION_UP ->
+                heading =
+                       if (heading == Heading.UP || heading == Heading.DOWN) {
+                            when {
+                                x > sizeGameScreenX / 4 -> Heading.RIGHT
+                                x < -sizeGameScreenX / 4 -> Heading.LEFT
+                                else -> heading
+                            }
+                       } else {
+                           when {
+                               y < 0 && x > - sizeGameScreenX / 4 && x < sizeGameScreenX / 4 -> Heading.UP
+                               y > 0 && x > - sizeGameScreenX / 4 && x < sizeGameScreenX / 4 -> Heading.DOWN
+                               else -> heading
+                           }
+                       }
+
         }
         return true
     }
